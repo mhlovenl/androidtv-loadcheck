@@ -17,9 +17,15 @@ import android.util.Log;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.List;
+
 
 public class CheckService extends Service {
     private static final String TAG = "CheckService";
@@ -27,6 +33,18 @@ public class CheckService extends Service {
     private boolean mContinue;
     private Notification mNotification;
     private String mServerAddress;
+
+
+    int cpu_temp = 0;
+	//float cpu_temp = 0;
+	int cpu_usage = 0;
+	long memory_total =0;
+	long memory_usage = 0;
+	long net_rx = 0;
+	long net_tx = 0;
+    String macAddress;
+    String serial_no;
+
 
     @Override
     public void onCreate() {
@@ -52,6 +70,20 @@ public class CheckService extends Service {
         createNotificationChannel();
         mNotification = new Notification.Builder(this, CHANNEL_ID)
                 .build();
+
+        {
+            macAddress = getMACAddress("eth0");
+
+            Log.i(TAG, "macAddress " + macAddress);
+        }
+
+        {
+            serial_no = getProp("ro.serialno");
+            //serial_no = getProp("ro.boot.selinux");
+            //serial_no = "0123456789"
+            Log.i(TAG, "serial_no " + serial_no);
+        }
+
     }
 
     String CHANNEL_ID = "LoadCheck";
@@ -61,6 +93,7 @@ public class CheckService extends Service {
                 NotificationManager.IMPORTANCE_DEFAULT);
         NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         manager.createNotificationChannel(channel);
+
     }
 
     private void saveServiceStatus(boolean active, String address) {
@@ -132,7 +165,7 @@ public class CheckService extends Service {
     private void checkHwProp() {
         HardwarePropertiesManager hm = (HardwarePropertiesManager) getSystemService(
                 Context.HARDWARE_PROPERTIES_SERVICE);
-
+		cpu_usage = 0;
         CpuUsageInfo[] infos = hm.getCpuUsages();
         for(int i = 0; i < infos.length ; i++) {
             long t = infos[i].getTotal() - total[i];
@@ -140,13 +173,17 @@ public class CheckService extends Service {
             Log.i(TAG, "CpuUsage[" + i + "] = " + ((float)a)/t);
             total[i]= infos[i].getTotal();
             active[i]= infos[i].getActive();
+			cpu_usage = cpu_usage + (int)((((float)a)/t)*100);
         }
 
+		
         float[] temps = hm.getDeviceTemperatures(
                 HardwarePropertiesManager.DEVICE_TEMPERATURE_CPU,
                 HardwarePropertiesManager.TEMPERATURE_CURRENT);
         for (int i = 0; i < temps.length; i++) {
             Log.i(TAG, "CpuTemp[" + i + "] = " + temps[i]);
+			cpu_temp = (int)temps[i];
+		//	cpu_temp = temps[i];
         }
     }
 
@@ -154,23 +191,26 @@ public class CheckService extends Service {
     long totalTx = 0;
 
     private void checkLoad() {
-        //checkHwProp();
+        checkHwProp();
 
         Log.i(TAG, "RxBytes : " + (TrafficStats.getTotalRxBytes() - totalRx));
+		net_rx = (TrafficStats.getTotalRxBytes() - totalRx)/1000;
         totalRx = TrafficStats.getTotalRxBytes();
 
         Log.i(TAG, "TxBytes : " + (TrafficStats.getTotalTxBytes() - totalTx));
+		net_tx= (TrafficStats.getTotalTxBytes() - totalTx)/1000;
         totalTx = TrafficStats.getTotalTxBytes();
 
         ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
         ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         am.getMemoryInfo(mi);
         Log.i(TAG, "MemoryUsage : " + (float)(mi.totalMem - mi.availMem)/mi.totalMem);
+		memory_total = mi.totalMem/1024;
+		memory_usage = (mi.totalMem - mi.availMem)/1024;
     }
 
-
     private void send() {
-        String url = "http://" + mServerAddress + "/api/log/RemoteControl?deviceid=0123456789";
+        String url = "http://" + mServerAddress + "/api/log/systeminfo?deviceid=0x"+serial_no+"&mac="+macAddress+"&systemid=0000.0000&cpu=400_" + cpu_usage + "&memory="+memory_total+"_"+memory_usage+"&thermal=" + cpu_temp + "&network="+net_tx+"_"+net_rx;
         Log.i(TAG, "send() URL :" + url);
         try {
             HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
@@ -192,6 +232,43 @@ public class CheckService extends Service {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static String getMACAddress(String interfaceName) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                if (interfaceName != null) {
+                    if (!intf.getName().equalsIgnoreCase(interfaceName)) continue;
+                }
+                byte[] mac = intf.getHardwareAddress();
+                if (mac==null) return "";
+                StringBuilder buf = new StringBuilder();
+                StringBuilder serial_no_buf = new StringBuilder();
+                for (int idx=0; idx<mac.length; idx++)
+                    buf.append(String.format("%02X:", mac[idx]));
+
+                if (buf.length()>0) buf.deleteCharAt(buf.length()-1);
+                return buf.toString();
+            }
+        } catch (Exception ex) { } // for now eat exceptions
+        return "";
+    }
+
+    public static String getProp(String property) {
+        try {
+            //String buf = "/system/bin/getprop ro.serialno" + property;
+            final Process ps = Runtime.getRuntime().exec("/system/bin/getprop "+property);
+            final InputStream is = ps.getInputStream();
+            final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            final String strParam = br.readLine();
+
+
+            return strParam;
+
+
+        } catch (Exception ex) { } // for now eat exceptions
+        return "";
     }
 
 
