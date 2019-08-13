@@ -19,10 +19,19 @@
         android:layout_height="50dp"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/start_button"
-        android:layout_marginLeft="200dp"
+        android:layout_marginLeft="150dp"
         android:text="Stop"
         android:textSize="20dp"
         android:onClick="onStopClicked" />
+
+    <EditText
+        android:id="@+id/address"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@id/stop_button"
+        android:layout_marginLeft="150dp"
+        android:hint="@string/default_server" />
 
 
     <Button
@@ -43,10 +52,12 @@
         android:layout_below="@id/stop_button"
         android:layout_marginTop="100dp"
         android:layout_toRightOf="@id/check_button"
-        android:layout_marginLeft="200dp"
+        android:layout_marginLeft="150dp"
         android:text="Send"
         android:textSize="20dp"
         android:onClick="onSendClicked" />
+
+
 
 
     <Button
@@ -67,7 +78,7 @@
         android:layout_below="@id/send_button"
         android:layout_marginTop="100dp"
         android:layout_toRightOf="@id/reboot_button"
-        android:layout_marginLeft="200dp"
+        android:layout_marginLeft="150dp"
         android:text="Reset"
         android:textSize="20dp"
         android:onClick="onResetClicked" />

@@ -13,6 +13,7 @@ import android.os.PowerManager;
 import android.os.RecoverySystem;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 
 import org.json.JSONObject;
 
@@ -81,11 +82,22 @@ public class MainActivity extends Activity {
         Log.i(TAG, "MemoryUsage : " + (float)(mi.totalMem - mi.availMem)/mi.totalMem);
     }
 
+    private String getServerAddress() {
+        EditText addressInput = findViewById(R.id.address);
+        String address = addressInput.getText().toString();
+        if (address.equals("")) {
+            return getResources().getString(R.string.default_server);
+        } else {
+            return address;
+        }
+    }
+
     public void onSendClicked(View v) {
+        final String address = getServerAddress();
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                String url = "http://222.117.240.140/api/log/RemoteControl?deviceid=0123456789";
+                String url = "http://" + address + "/api/log/RemoteControl?deviceid=0123456789";
                 Log.i(TAG, "onSendClicked() URL :" + url);
                 try {
                     HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
@@ -132,7 +144,9 @@ public class MainActivity extends Activity {
     }
 
     public void onStartClicked(View v) {
-        startForegroundService(new Intent(this, CheckService.class));
+        Intent intent = new Intent(this, CheckService.class);
+        intent.putExtra("serverAddress", getServerAddress());
+        startForegroundService(intent);
     }
 
     public void onStopClicked(View v) {

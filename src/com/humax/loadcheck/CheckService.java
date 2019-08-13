@@ -25,6 +25,7 @@ public class CheckService extends Service {
     private Thread mThread;
     private boolean mContinue;
     private Notification mNotification;
+    private String mServerAddress;
 
     @Override
     public void onCreate() {
@@ -65,6 +66,8 @@ public class CheckService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand()");
+
+        mServerAddress = intent.getStringExtra("serverAddress");
 
         startForeground(1, mNotification);
 
@@ -133,7 +136,7 @@ public class CheckService extends Service {
 
 
     private void send() {
-        String url = "http://222.117.240.140/api/log/RemoteControl?deviceid=0123456789";
+        String url = "http://" + mServerAddress + "/api/log/RemoteControl?deviceid=0123456789";
         Log.i(TAG, "send() URL :" + url);
         try {
             HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
