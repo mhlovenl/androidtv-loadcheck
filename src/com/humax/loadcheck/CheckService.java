@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.TrafficStats;
 import android.os.CpuUsageInfo;
 import android.os.HardwarePropertiesManager;
@@ -62,16 +63,48 @@ public class CheckService extends Service {
         manager.createNotificationChannel(channel);
     }
 
+    private void saveServiceStatus(boolean active, String address) {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putBoolean(getString(R.string.saved_service_active), active);
+        editor.putString(getString(R.string.saved_server_address), address);
+        editor.commit();
+    }
+
+    private boolean isServiceActive() {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getBoolean(getString(R.string.saved_service_active),
+                false);
+    }
+
+    private String loadServerAddress() {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getString(getString(R.string.saved_server_address),
+                    getString(R.string.default_server));
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand()");
 
-        mServerAddress = intent.getStringExtra("serverAddress");
-
         startForeground(1, mNotification);
 
+        mServerAddress = intent.getStringExtra("serverAddress");
+        if (mServerAddress == null) {
+            // service recovered with null intent
+            if (isServiceActive()) {
+                mServerAddress = loadServerAddress();
+            } else {
+                stopForeground(0);
+                return START_NOT_STICKY;
+            }
+        }
+
         if (!mContinue) {
+            saveServiceStatus(true, mServerAddress);
             mContinue = true;
             mThread.start();
         }
@@ -83,6 +116,7 @@ public class CheckService extends Service {
         stopForeground(0);
         mContinue = false;
         try {
+            saveServiceStatus(false, mServerAddress);
             mThread.interrupt();
             mThread.join();
         } catch (InterruptedException e) {

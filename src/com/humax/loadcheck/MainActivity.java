@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -20,7 +21,6 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 public class MainActivity extends Activity {
@@ -36,6 +36,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        loadEditText();
     }
 
     private long total[] = {0, 0, 0, 0};
@@ -85,11 +86,28 @@ public class MainActivity extends Activity {
     private String getServerAddress() {
         EditText addressInput = findViewById(R.id.address);
         String address = addressInput.getText().toString();
+        saveEditText(address);
         if (address.equals("")) {
             return getResources().getString(R.string.default_server);
         } else {
             return address;
         }
+    }
+
+    private void saveEditText(String address) {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(getString(R.string.saved_edittext), address);
+        editor.commit();
+    }
+
+    private void loadEditText() {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        String address = pref.getString(getString(R.string.saved_edittext), "");
+        EditText addressInput = findViewById(R.id.address);
+        addressInput.setText(address);
     }
 
     public void onSendClicked(View v) {
