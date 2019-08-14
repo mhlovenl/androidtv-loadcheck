@@ -43,7 +43,7 @@ public class CheckService extends Service {
 	long net_rx = 0;
 	long net_tx = 0;
     String macAddress;
-    String serial_no;
+    private String serial_no;
 
 
     @Override
@@ -234,7 +234,7 @@ public class CheckService extends Service {
         }
     }
 
-    public static String getMACAddress(String interfaceName) {
+    private String getMACAddress(String interfaceName) {
         try {
             List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
             for (NetworkInterface intf : interfaces) {
@@ -255,7 +255,7 @@ public class CheckService extends Service {
         return "";
     }
 
-    public static String getProp(String property) {
+    private String getProp(String property) {
         try {
             //String buf = "/system/bin/getprop ro.serialno" + property;
             final Process ps = Runtime.getRuntime().exec("/system/bin/getprop "+property);
