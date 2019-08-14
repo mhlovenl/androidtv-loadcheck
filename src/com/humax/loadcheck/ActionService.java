@@ -7,13 +7,10 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.RecoverySystem;
 import android.util.Log;
-import android.view.View;
-
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -253,7 +250,7 @@ public class ActionService extends Service {
 
         if(mAction.equals(Reboot)) {
             Log.i(TAG, "reboot start !! ");
-            //onReboot();
+            onReboot();
         }
 
         if(mAction.equals(Reset)) {
