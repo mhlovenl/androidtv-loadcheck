@@ -7,4 +7,6 @@
     <string name="saved_service_active">com.humax.loadcheck.CheckService.ACTIVE</string>
     <string name="saved_server_address">com.humax.loadcheck.CheckService.SERVER_ADDRESS</string>
     <string name="saved_edittext">com.humax.loadcheck.MainActivity.EDITTEXT</string>
+    <string name="saved_action_service_active">com.humax.loadcheck.ActionService.ACTIVE</string>
+    <string name="saved_action_server_address">com.humax.loadcheck.ActionService.SERVER_ADDRESS</string>
 </resources>

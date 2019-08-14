@@ -16,6 +16,10 @@ public class BootCompleteReceiver extends BroadcastReceiver {
             if (isServiceActive(context)) {
                 restartService(context);
             }
+
+            if (isActionServiceActive(context)) {
+                restartActionService(context);
+            }
         }
     }
 
@@ -39,4 +43,29 @@ public class BootCompleteReceiver extends BroadcastReceiver {
         return pref.getString(context.getString(R.string.saved_server_address),
                 context.getString(R.string.default_server));
     }
+
+
+
+    public void restartActionService(Context context) {
+        Log.d(TAG, "restartActionService()");
+        Intent intent = new Intent(context, ActionService.class);
+        intent.putExtra("serverAddress", loadServerAddress(context));
+        context.startForegroundService(intent);
+    }
+
+    private boolean isActionServiceActive(Context context) {
+        SharedPreferences pref = context.getSharedPreferences(
+                context.getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getBoolean(context.getString(R.string.saved_action_service_active),
+                false);
+    }
+
+    private String loadActionServerAddress(Context context) {
+        SharedPreferences pref = context.getSharedPreferences(
+                context.getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getString(context.getString(R.string.saved_action_server_address),
+                context.getString(R.string.default_server));
+    }
+
+
 }

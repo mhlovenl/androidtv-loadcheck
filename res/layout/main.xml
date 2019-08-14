@@ -82,4 +82,30 @@
         android:text="Reset"
         android:textSize="20dp"
         android:onClick="onResetClicked" />
+
+
+
+
+    <Button
+        android:id="@+id/action_start_button"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_below="@id/reboot_button"
+        android:layout_marginTop="70dp"
+        android:layout_alignParentLeft="true"
+        android:text="ActionStart"
+        android:textSize="20dp"
+        android:onClick="onActionStartClicked" />
+
+    <Button
+        android:id="@+id/action_stop_button"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_below="@id/reset_button"
+        android:layout_marginTop="70dp"
+        android:layout_toRightOf="@id/reboot_button"
+        android:layout_marginLeft="100dp"
+        android:text="ActionStop"
+        android:textSize="20dp"
+        android:onClick="onActionStopClicked" />
 </RelativeLayout>
