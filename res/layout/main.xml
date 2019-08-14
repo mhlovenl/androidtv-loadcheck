@@ -5,24 +5,24 @@
 
     <Button
         android:id="@+id/start_button"
-        android:layout_width="100dp"
+        android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:text="Start"
-        android:textSize="20dp"
-        android:onClick="onStartClicked" />
+        android:layout_alignParentTop="true"
+        android:onClick="onStartClicked"
+        android:text="Info Start"
+        android:textSize="20dp" />
 
     <Button
         android:id="@+id/stop_button"
-        android:layout_width="100dp"
+        android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_alignParentTop="true"
+        android:layout_marginLeft="80dp"
         android:layout_toRightOf="@id/start_button"
-        android:layout_marginLeft="150dp"
-        android:text="Stop"
-        android:textSize="20dp"
-        android:onClick="onStopClicked" />
+        android:onClick="onStopClicked"
+        android:text="INFO Stop"
+        android:textSize="20dp" />
 
     <EditText
         android:id="@+id/address"
@@ -84,28 +84,26 @@
         android:onClick="onResetClicked" />
 
 
-
-
     <Button
         android:id="@+id/action_start_button"
-        android:layout_width="150dp"
+        android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_below="@id/reboot_button"
-        android:layout_marginTop="70dp"
         android:layout_alignParentLeft="true"
-        android:text="ActionStart"
-        android:textSize="20dp"
-        android:onClick="onActionStartClicked" />
+        android:layout_marginTop="70dp"
+        android:onClick="onActionStartClicked"
+        android:text="Action Start"
+        android:textSize="20dp" />
 
     <Button
         android:id="@+id/action_stop_button"
-        android:layout_width="150dp"
+        android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_below="@id/reset_button"
+        android:layout_marginLeft="90dp"
         android:layout_marginTop="70dp"
         android:layout_toRightOf="@id/reboot_button"
-        android:layout_marginLeft="100dp"
-        android:text="ActionStop"
-        android:textSize="20dp"
-        android:onClick="onActionStopClicked" />
+        android:onClick="onActionStopClicked"
+        android:text="Action Stop"
+        android:textSize="20dp" />
 </RelativeLayout>
