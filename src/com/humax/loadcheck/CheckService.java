@@ -12,6 +12,8 @@ import android.net.TrafficStats;
 import android.os.CpuUsageInfo;
 import android.os.HardwarePropertiesManager;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.RecoverySystem;
 import android.util.Log;
 
 import org.json.JSONObject;
@@ -33,7 +35,11 @@ public class CheckService extends Service {
     private boolean mContinue;
     private Notification mNotification;
     private String mServerAddress;
-
+    private String mAction;
+    private String mActionID;
+    private String mSerialNumber;
+    private static String Reboot = "reboot";
+    private static String Reset = "reset";
 
     int cpu_temp = 0;
 	//float cpu_temp = 0;
@@ -43,29 +49,13 @@ public class CheckService extends Service {
 	long net_rx = 0;
 	long net_tx = 0;
     String macAddress;
-    private String serial_no;
+    //private String serial_no;
 
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.i(TAG, "onCreate()");
-
-        mContinue = false;
-        mThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (mContinue) {
-                    checkLoad();
-                    send();
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Log.i(TAG, "Thread interrupted");
-                    }
-                }
-            }
-        });
 
         createNotificationChannel();
         mNotification = new Notification.Builder(this, CHANNEL_ID)
@@ -77,12 +67,31 @@ public class CheckService extends Service {
             Log.i(TAG, "macAddress " + macAddress);
         }
 
+
         {
-            serial_no = getProp("ro.serialno");
-            //serial_no = getProp("ro.boot.selinux");
-            //serial_no = "0123456789"
-            Log.i(TAG, "serial_no " + serial_no);
+            mSerialNumber = getProp("ro.serialno");
+            Log.i(TAG, "ro.serialno " + mSerialNumber);
         }
+
+        mContinue = false;
+        mThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (mContinue) {
+                    checkLoad();
+                    send();
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Log.i(TAG, "Thread interrupted");
+                    }
+
+                }
+            }
+        });
+
+
 
     }
 
@@ -210,7 +219,7 @@ public class CheckService extends Service {
     }
 
     private void send() {
-        String url = "http://" + mServerAddress + "/api/log/systeminfo?deviceid=0x"+serial_no+"&mac="+macAddress+"&systemid=0000.0000&cpu=400_" + cpu_usage + "&memory="+memory_total+"_"+memory_usage+"&thermal=" + cpu_temp + "&network="+net_tx+"_"+net_rx;
+        String url = "http://" + mServerAddress + "/api/log/systeminfo?deviceid=0x"+mSerialNumber+"&mac="+macAddress+"&systemid=0000.0000&cpu=400_" + cpu_usage + "&memory="+memory_total+"_"+memory_usage+"&thermal=" + cpu_temp + "&network="+net_tx+"_"+net_rx;
         Log.i(TAG, "send() URL :" + url);
         try {
             HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
@@ -276,4 +285,18 @@ public class CheckService extends Service {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    private void onReboot() {
+        PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
+        pm.reboot(null);
+    }
+
+    private void onReset() {
+        try {
+            RecoverySystem.rebootWipeUserData(getApplicationContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

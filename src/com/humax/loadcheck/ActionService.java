@@ -26,10 +26,18 @@ public class ActionService extends Service {
     private Notification mNotification;
     private String mServerAddress;
     private String mAction;
+    private String mActionID;
     private String mSerialNumber;
+
+    private String gAction;
+    private String gActionID;
+    private String gActionStatus;
+
     private static String Reboot = "reboot";
     private static String Reset = "reset";
 
+    private String mActionStatus = null;
+// ActionStatus is START or COMPLETE
 
     @Override
     public void onCreate() {
@@ -41,6 +49,7 @@ public class ActionService extends Service {
             @Override
             public void run() {
                 while (mContinue) {
+                    send_action_status();
                     send();
                     try {
                         Thread.sleep(1000);
@@ -101,10 +110,12 @@ public class ActionService extends Service {
         startForeground(1, mNotification);
 
         mServerAddress = intent.getStringExtra("serverAddress");
+        Log.i(TAG, "getStringExtra mServerAddress = " + mServerAddress);
         if (mServerAddress == null) {
             // service recovered with null intent
             if (isServiceActive()) {
                 mServerAddress = loadServerAddress();
+                Log.i(TAG, "loadServerAddress mServerAddress = " + mServerAddress);
             } else {
                 stopForeground(0);
                 return START_NOT_STICKY;
@@ -125,6 +136,7 @@ public class ActionService extends Service {
         mContinue = false;
         try {
             saveServiceStatus(false, mServerAddress);
+            Log.i(TAG, "saveServiceStatus mServerAddress = " + mServerAddress);
             mThread.interrupt();
             mThread.join();
         } catch (InterruptedException e) {
@@ -151,35 +163,28 @@ public class ActionService extends Service {
 
                 JSONObject json = new JSONObject(content);
                 mAction = json.getString("action");
-                Log.i(TAG, "action : " + mAction);
+                Log.i(TAG, "mAction : " + mAction);
+                mActionID = json.getString("actionid");
+                Log.i(TAG, "mActionID : " + mActionID);
+                saveActionID(mActionID);
 
-                /*
-                if(mAction.equals(Reboot)) {
-                    Log.i(TAG, "reboot start !! ");
-                    url = "http://" + mServerAddress +"/api/log/RemoteControlStatus?actionid=a01367fc-7233-415a-bb8f-5862e4d63903&status=start";
-                    conn.getOutputStream();
-                    conn.
-                    Log.i(TAG, "send() URL :" + url);
-                    Thread.sleep(1000);
-                    //onReboot();
-                }
-
-                if(mAction.equals(Reset)) {
-                    Log.i(TAG, "reset start !! ");
-                    //onReset();
-                }
-               */
-
-
+                conn.disconnect();
             }
-
-            conn.disconnect();
+            else
+            {
+                conn.disconnect();
+                Log.e(TAG, "HTTP Not Ok !!!");
+                return;
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e(TAG, "Exception connection");
+            return;
         }
 
-
-        url = "http://" + mServerAddress +"/api/log/RemoteControlStatus?actionid=a01367fc-7233-415a-bb8f-5862e4d63903&status=start";
+        Log.i(TAG, "server status start !! ");
+//server status start
+        url = "http://" + mServerAddress +"/api/log/RemoteControlStatus?actionid="+mActionID+"&status=start";
         Log.i(TAG, "send() URL :" + url);
         try {
             HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
@@ -197,6 +202,8 @@ public class ActionService extends Service {
             conn.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e(TAG, "Exception server status start");
+            return;
         }
 
         try {
@@ -205,62 +212,68 @@ public class ActionService extends Service {
             Log.i(TAG, "Thread interrupted");
         }
 
-//server status complete
-        url = "http://" + mServerAddress + "/api/log/RemoteControlStatus?actionid=a01367fc-7233-415a-bb8f-5862e4d63903&status=complete";
-        Log.i(TAG, "send() URL :" + url);
-        try {
-            HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
-            conn.setConnectTimeout(1000);
-            int resp = conn.getResponseCode();
-            Log.i(TAG, "Response code : " + resp);
-
-            if (resp == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        conn.getInputStream()));
-                String content = in.readLine();
-                Log.i(TAG, "Content : " + content);
-            }
-
-            conn.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-//server status reset
-        url = "http://" + mServerAddress + "/api/log/RemoteControlReset?actionid=a01367fc-7233-415a-bb8f-5862e4d63903";
-        Log.i(TAG, "send() URL :" + url);
-        try {
-            HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
-            conn.setConnectTimeout(1000);
-            int resp = conn.getResponseCode();
-            Log.i(TAG, "Response code : " + resp);
-
-            if (resp == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        conn.getInputStream()));
-                String content = in.readLine();
-                Log.i(TAG, "Content : " + content);
-            }
-
-            conn.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
         if(mAction.equals(Reboot)) {
             Log.i(TAG, "reboot start !! ");
+            mActionStatus = "COMPLETE";
+            saveActionStatus(mActionStatus);
             onReboot();
+            Log.i(TAG, "reboot complete. It will be not printed !! ");
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                Log.i(TAG, "Thread interrupted");
+            }
         }
 
         if(mAction.equals(Reset)) {
             Log.i(TAG, "reset start !! ");
+            mActionStatus = "COMPLETE";
+            saveActionStatus(mActionStatus);
             onReset();
+
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                Log.i(TAG, "Thread interrupted");
+            }
         }
 
+    }
 
+    private void send_action_status(){
+        gActionStatus = loadActionStatus();
+        Log.i(TAG, "gActionStatus = " + gActionStatus);
+        gActionID = loadActionID();
+        Log.i(TAG, "gActionID = " + gActionID);
+        gAction = loadAction();
+        Log.i(TAG, "gAction = " + gAction);
+        if(gActionStatus.equals("COMPLETE")) {
 
+            String url = "http://" + mServerAddress + "/api/log/RemoteControlStatus?actionid=" + gActionID + "&status=complete";
+            Log.i(TAG, "send_action_status() URL :" + url);
+            try {
+                HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
+                conn.setConnectTimeout(1000);
+                int resp = conn.getResponseCode();
+                Log.i(TAG, "Response code : " + resp);
 
+                if (resp == HttpURLConnection.HTTP_OK) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(
+                            conn.getInputStream()));
+                    String content = in.readLine();
+                    Log.i(TAG, "Content : " + content);
+                }
+
+                conn.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, "Exception server status complete");
+                return;
+            }
+        }
+
+        mActionStatus = "START";
+        saveActionStatus(mActionStatus);
     }
 
 
@@ -297,4 +310,47 @@ public class ActionService extends Service {
             e.printStackTrace();
         }
     }
+
+    private void saveActionStatus(String status) {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(getString(R.string.saved_action_server_status), status);
+        editor.commit();
+    }
+
+    private String loadActionStatus() {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getString(getString(R.string.saved_action_server_status), null);
+    }
+
+    private void saveActionID(String actionid) {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(getString(R.string.saved_action_server_actionid), actionid);
+        editor.commit();
+    }
+
+    private String loadActionID() {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getString(getString(R.string.saved_action_server_actionid), null);
+    }
+
+    private void saveAction(String action) {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(getString(R.string.saved_action_server_action), action);
+        editor.commit();
+    }
+
+    private String loadAction() {
+        SharedPreferences pref = getSharedPreferences(
+                getString(R.string.pref_file_key), Context.MODE_PRIVATE);
+        return pref.getString(getString(R.string.saved_action_server_action), null);
+    }
+
 }
