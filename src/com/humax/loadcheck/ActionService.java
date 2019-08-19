@@ -273,7 +273,9 @@ public class ActionService extends Service {
         }
 
         mActionStatus = "START";
+        Log.i(TAG, "saveActionStatus start");
         saveActionStatus(mActionStatus);
+        Log.i(TAG, "send_action_status end");
     }
 
 
@@ -322,7 +324,7 @@ public class ActionService extends Service {
     private String loadActionStatus() {
         SharedPreferences pref = getSharedPreferences(
                 getString(R.string.pref_file_key), Context.MODE_PRIVATE);
-        return pref.getString(getString(R.string.saved_action_server_status), null);
+        return pref.getString(getString(R.string.saved_action_server_status), "START");
     }
 
     private void saveActionID(String actionid) {
@@ -336,7 +338,7 @@ public class ActionService extends Service {
     private String loadActionID() {
         SharedPreferences pref = getSharedPreferences(
                 getString(R.string.pref_file_key), Context.MODE_PRIVATE);
-        return pref.getString(getString(R.string.saved_action_server_actionid), null);
+        return pref.getString(getString(R.string.saved_action_server_actionid), "0");
     }
 
     private void saveAction(String action) {
@@ -350,7 +352,7 @@ public class ActionService extends Service {
     private String loadAction() {
         SharedPreferences pref = getSharedPreferences(
                 getString(R.string.pref_file_key), Context.MODE_PRIVATE);
-        return pref.getString(getString(R.string.saved_action_server_action), null);
+        return pref.getString(getString(R.string.saved_action_server_action), "reset");
     }
 
 }
