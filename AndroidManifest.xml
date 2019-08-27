@@ -24,6 +24,11 @@
             android:enabled="true"
             android:exported="true"></service>
 
+        <service
+            android:name=".CheckApp"
+            android:enabled="true"
+            android:exported="true"></service>
+
         <receiver
             android:name=".BootCompleteReceiver"
             android:enabled="true"

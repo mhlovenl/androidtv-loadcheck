@@ -224,7 +224,7 @@ public class ActionService extends Service {
                 Log.i(TAG, "Thread interrupted");
             }
         }
-
+/*
         if(mAction.equals(Reset)) {
             Log.i(TAG, "reset start !! ");
             mActionStatus = "COMPLETE";
@@ -237,7 +237,7 @@ public class ActionService extends Service {
                 Log.i(TAG, "Thread interrupted");
             }
         }
-
+*/
     }
 
     private void send_action_status(){

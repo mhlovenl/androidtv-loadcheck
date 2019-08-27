@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">LoadCheck</string>
-    <string name="default_server">222.121.66.23</string>
+    <string name="default_server">172.27.1.2</string>
 
     <string name="pref_file_key">com.humax.loadcheck.PREF_FILE_KEY</string>
     <string name="saved_service_active">com.humax.loadcheck.CheckService.ACTIVE</string>
@@ -12,4 +12,6 @@
     <string name="saved_action_server_status">com.humax.loadcheck.ActionService.STATUS</string>
     <string name="saved_action_server_actionid">com.humax.loadcheck.ActionService.ACTIONID</string>
     <string name="saved_action_server_action">com.humax.loadcheck.ActionService.ACTION</string>
+    <string name="saved_check_app_active">com.humax.loadcheck.CheckApp.ACTIVE</string>
+    <string name="saved_check_app_server_address">com.humax.loadcheck.CheckApp.SERVER_ADDRESS</string>
 </resources>

@@ -165,10 +165,16 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, CheckService.class);
         intent.putExtra("serverAddress", getServerAddress());
         startForegroundService(intent);
+
+        Intent intent_app = new Intent(this, CheckApp.class);
+        intent_app.putExtra("serverAddress", getServerAddress());
+        startForegroundService(intent_app);
     }
 
     public void onStopClicked(View v) {
+
         stopService(new Intent(this, CheckService.class));
+        stopService(new Intent(this, CheckApp.class));
     }
 
 
