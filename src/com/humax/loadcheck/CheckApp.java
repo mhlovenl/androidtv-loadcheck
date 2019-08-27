@@ -12,16 +12,14 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.RecoverySystem;
 import android.os.StatFs;
 import android.text.format.Formatter;
 import android.util.Log;
+import org.json.JSONArray;
 import org.json.JSONObject;
-
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,7 +31,6 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,10 +45,12 @@ class PInfo {
     String versionName = "";
     String firstinstalltime = "";
     int versionCode = 0;
+
     void prettyPrint() {
         //Log.i(TAG + "\t" + pname + "\t" + versionName + "\t" + versionCode);
         Log.i(TAG, appname + "\t" + pname + "\t" + versionName + "\t" + versionCode + "\t" + firstinstalltime);
     }
+
     String prettyString(){
 
         StringBuilder sb = new StringBuilder(appname + "\t");
@@ -62,9 +61,6 @@ class PInfo {
         //Log.i(TAG, sb.toString());
         return sb.toString();
     }
-
-
-
 }
 
 
@@ -75,21 +71,16 @@ public class CheckApp extends Service {
     private boolean mContinue;
     private Notification mNotification;
     private String mServerAddress;
-    private String mAppName;
-    private String mAppVersion;
     private String mSerialNumber;
     private String mIPAddress;
     private String mGmsversion;
     private String mBuildid;
     private Long mFirstbootLong;
     private String mFirstboot;
-    private Long mStartTimeLong;
     private String mStartTime;
     private String mAvailableSize;
     private String mTotalInstalledApp;
     private Date dt = new Date();
-    private String mInstalledapp = "installedapp";
-    private String mInstalledappContents = "";
     ArrayList<PInfo> mAppslist;
 
     @Override
@@ -128,7 +119,7 @@ public class CheckApp extends Service {
                     send_app_info();
 
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(60000);
                     } catch (InterruptedException e) {
                         Log.i(TAG, "Thread interrupted");
                     }
@@ -217,9 +208,11 @@ public class CheckApp extends Service {
     }
 
     private void send_app_info() {
-        String url = "http://" + mServerAddress + "/api/log/app?deviceid=0x"+mSerialNumber;
-        //String url = "http://222.121.66.23/api/log/app?deviceid=1111111111&packageName=com.test.humax";
+        String url = "http://" + mServerAddress + "/api/log/DeviceInfo?deviceid=0x"+mSerialNumber;
         Log.i(TAG, "send() URL :" + url);
+        OutputStream out = null;
+        String json = "";
+
         try {
             HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
 
@@ -227,8 +220,10 @@ public class CheckApp extends Service {
             conn.setConnectTimeout(15000);
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Accept","application/json");
             conn.setDoInput(true);
             conn.setDoOutput(true);
+            conn.connect();
 
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("gmsversion", mGmsversion);
@@ -246,28 +241,25 @@ public class CheckApp extends Service {
             Log.i(TAG, "availablesize " + mAvailableSize);
             Log.i(TAG, "totalinstalledapp " + mTotalInstalledApp);
 
+            JSONArray jsonArray = getAppList(mAppslist);
+            jsonParam.put("applist", jsonArray);
 
+            json = jsonParam.toString();
 
+            Log.i(TAG, "json string : " + json);
 
-            //ArrayList<PInfo> appslist = getInstalledApps(false); /* false = no system packages */
-            final int mSize = mAppslist.size();
-            for (int i=0; i<mSize; i++) {
-                //mAppslist.get(i).prettyPrint();
-                mInstalledappContents = mAppslist.get(i).prettyString();
-                Log.i(TAG, mInstalledapp + "\t"+ mInstalledappContents);
-                jsonParam.put(mInstalledapp, mInstalledappContents);
-            }
+            out = new BufferedOutputStream(conn.getOutputStream());
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
 
-            conn.connect();
-
-            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-            os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-
-            os.flush();
-            os.close();
+            writer.write(json);
+            writer.flush();
+            writer.close();
+            out.close();
 
             int resp = conn.getResponseCode();
+
             Log.i(TAG, "Response code : " + resp);
+            Log.i(TAG, "MSG" + conn.getResponseMessage());
 
             if (resp == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(
@@ -289,17 +281,7 @@ public class CheckApp extends Service {
             return;
         }
 
-
     }
-
-    private void check_app_status(){
-
-        mAppName = loadAappName();
-        Log.i(TAG, "mAppName = " + mAppName);
-
-        Log.i(TAG, "check_app_status end");
-    }
-
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -332,16 +314,6 @@ public class CheckApp extends Service {
         }
 
         return "";
-    }
-
-
-    private ArrayList<PInfo> getPackages() {
-        ArrayList<PInfo> apps = getInstalledApps(false); /* false = no system packages */
-        final int max = apps.size();
-        for (int i=0; i<max; i++) {
-            apps.get(i).prettyPrint();
-        }
-        return apps;
     }
 
     private ArrayList<PInfo> getInstalledApps(boolean getSysPackages) {
@@ -405,6 +377,33 @@ public class CheckApp extends Service {
         SimpleDateFormat sdf = new SimpleDateFormat();
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         return sdf.format(new Date(millisec));
+
+    }
+
+    public static JSONArray getAppList (ArrayList<PInfo> al) {
+
+        JSONArray jsonArray = new JSONArray();
+
+        try {
+            final int mSize = al.size();
+            for (int i = 0; i < mSize; i++) {
+
+                JSONObject applist = new JSONObject();
+                applist.put("appname", al.get(i).appname);
+                applist.put("packagename", al.get(i).pname);
+                applist.put("versionname", al.get(i).versionName);
+                applist.put("versioncode", al.get(i).versionCode);
+                applist.put("installtime", al.get(i).firstinstalltime);
+                jsonArray.put(applist);
+                Log.i(TAG, "applist" + "\t" + al.get(i).appname + "\t" + al.get(i).pname + "\t" + al.get(i).versionName + "\t" + al.get(i).versionCode + "\t" + al.get(i).firstinstalltime);
+
+            }
+        }catch(Exception e){
+                    e.printStackTrace();
+        }
+
+        Log.i(TAG, "json array" + "\n" + jsonArray.toString());
+        return jsonArray;
 
     }
 

@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
         loadEditText();
     }
-
+/*
     private long total[] = {0, 0, 0, 0};
     private long active[] = {0, 0, 0, 0};
 
@@ -82,7 +82,7 @@ public class MainActivity extends Activity {
         am.getMemoryInfo(mi);
         Log.i(TAG, "MemoryUsage : " + (float)(mi.totalMem - mi.availMem)/mi.totalMem);
     }
-
+*/
     private String getServerAddress() {
         EditText addressInput = findViewById(R.id.address);
         String address = addressInput.getText().toString();
@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
         EditText addressInput = findViewById(R.id.address);
         addressInput.setText(address);
     }
-
+/*
     public void onSendClicked(View v) {
         final String address = getServerAddress();
         new AsyncTask<Void, Void, Void>() {
@@ -160,7 +160,7 @@ public class MainActivity extends Activity {
             }
         }.execute();
     }
-
+*/
     public void onStartClicked(View v) {
         Intent intent = new Intent(this, CheckService.class);
         intent.putExtra("serverAddress", getServerAddress());
@@ -169,15 +169,20 @@ public class MainActivity extends Activity {
         Intent intent_app = new Intent(this, CheckApp.class);
         intent_app.putExtra("serverAddress", getServerAddress());
         startForegroundService(intent_app);
+
+        Intent intent_action = new Intent(this, ActionService.class);
+        intent_action.putExtra("serverAddress", getServerAddress());
+        startForegroundService(intent_action);
     }
 
     public void onStopClicked(View v) {
 
         stopService(new Intent(this, CheckService.class));
         stopService(new Intent(this, CheckApp.class));
+        stopService(new Intent(this, ActionService.class));
     }
 
-
+/*
     public void onActionStartClicked(View v) {
         Intent intent = new Intent(this, ActionService.class);
         intent.putExtra("serverAddress", getServerAddress());
@@ -185,6 +190,8 @@ public class MainActivity extends Activity {
     }
 
     public void onActionStopClicked(View v) {
+
         stopService(new Intent(this, ActionService.class));
     }
+    */
 }

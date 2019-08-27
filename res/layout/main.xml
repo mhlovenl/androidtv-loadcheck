@@ -10,7 +10,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:onClick="onStartClicked"
-        android:text="Info Start"
+        android:text="Start"
         android:textSize="20dp" />
 
     <Button
@@ -21,7 +21,7 @@
         android:layout_marginLeft="80dp"
         android:layout_toRightOf="@id/start_button"
         android:onClick="onStopClicked"
-        android:text="INFO Stop"
+        android:text="Stop"
         android:textSize="20dp" />
 
     <EditText
@@ -33,7 +33,7 @@
         android:layout_marginLeft="150dp"
         android:hint="@string/default_server" />
 
-
+<!--
     <Button
         android:id="@+id/action_start_button"
         android:layout_width="wrap_content"
@@ -53,4 +53,5 @@
         android:onClick="onActionStopClicked"
         android:text="Action Stop"
         android:textSize="20dp" />
+        -->
 </RelativeLayout>
